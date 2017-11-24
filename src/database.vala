@@ -123,6 +123,10 @@ public class Icd.Database : GLib.Object {
                 value += " NOT NULL PRIMARY KEY";
             }
 
+            if (spec.get_nick () == "unique") {
+                value += " NOT NULL UNIQUE";
+            }
+
             values += value;
         }
 
@@ -316,10 +320,11 @@ public class Icd.Database : GLib.Object {
                 Set last_insert_row, out_params;
                 var stmt = builder.get_statement ();
                 stmt.get_parameters (out out_params);
-
                 conn.statement_execute_non_select (stmt, out_params, out last_insert_row);
             } catch (Error e) {
-                critical (e.message);
+                if (e.code != 4) {
+                    critical ("Error: %s code: %d", e.message, e.code);
+                }
             }
 
              /*get the id*/
@@ -354,7 +359,6 @@ public class Icd.Database : GLib.Object {
 
             sql.data[sql.length - 1] = ' ';
             sql += "WHERE id = %d".printf (id);
-
             conn.execute_non_select_command (sql);
         } catch (GLib.Error e) {
             throw new DatabaseError.EXECUTE_QUERY (
@@ -372,6 +376,18 @@ public class Icd.Database : GLib.Object {
             var sql = "DELETE FROM %s".printf (table);
             sql += (id == null) ? "" : " WHERE id = %d".printf (id.get_int ());
             /*debug (sql);*/
+            conn.execute_non_select_command (sql);
+        } catch (GLib.Error e) {
+            throw new DatabaseError.EXECUTE_QUERY (
+                "Error deleting '%s' record: %s", table, e.message);
+        }
+    }
+
+    public void delete_where (string table, string param, string value) throws GLib.Error {
+        try {
+            var sql = "DELETE FROM %s".printf (table);
+            sql += " WHERE %s = \"%s\"".printf (param, value);
+            debug (sql);
             conn.execute_non_select_command (sql);
         } catch (GLib.Error e) {
             throw new DatabaseError.EXECUTE_QUERY (
