@@ -1,5 +1,3 @@
-using Gda;
-
 public errordomain Icd.DatabaseError {
     EXECUTE_QUERY,
     PARSE
@@ -10,7 +8,7 @@ public errordomain Icd.DatabaseError {
  */
 public class Icd.Database : GLib.Object {
 
-    public Connection conn { get; construct set; }
+    public Gda.Connection conn { get; construct set; }
 
     public Database () {
         var config = Icd.Config.get_default ();
@@ -26,16 +24,20 @@ public class Icd.Database : GLib.Object {
                 var provider = config.get_db_provider ();
                 switch (config.get_db_provider ()) {
                     case "MySQL":
-                        cnc = "DB_NAME=%s;HOST=%s;PORT=%d".printf (
+                        cnc = "DB_NAME=%s;HOST=%s;PORT=%d;USERNAME=%s;PASSWORD=%s".printf (
                                     config.get_db_name (),
                                     config.get_db_host (),
-                                    config.get_db_port ());
+                                    config.get_db_port (),
+                                    config.get_db_username (),
+                                    config.get_db_password ());
                         break;
                     case "PostgreSQL":
-                        cnc = "DB_NAME=%s;HOST=%s;PORT=%d".printf (
+                        cnc = "DB_NAME=%s;HOST=%s;PORT=%d;USERNAME=%s;PASSWORD=%s".printf (
                                     config.get_db_name (),
                                     config.get_db_host (),
-                                    config.get_db_port ());
+                                    config.get_db_port (),
+                                    config.get_db_username (),
+                                    config.get_db_password ());
                         break;
                     case "SQLite":
                         var db_file = GLib.Path.build_filename (config.get_db_path (),
@@ -55,11 +57,20 @@ public class Icd.Database : GLib.Object {
             error ("An error occurred connecting to the database: %s", e.message);
         }
 
+        conn.error.connect (error_cb);
+
         dump_db_schema ();
     }
 
     ~Database () {
         conn.close ();
+    }
+
+    /**
+     * XXX Just for debugging (?)
+     */
+    private void error_cb (Gda.ConnectionEvent error) {
+        debug ("libgda connection error: %s", error.get_description ());
     }
 
     /**
@@ -90,12 +101,15 @@ public class Icd.Database : GLib.Object {
         string[] values = {};
         var ocl = (ObjectClass) type.class_ref ();
 
+        var config = Icd.Config.get_default ();
+        var provider = config.get_db_provider ();
+
         foreach (var spec in ocl.list_properties ()) {
             string? value_type = null;
 
             /* FIXME This may only work for SQLite */
             if (spec.value_type == typeof (string)) {
-                value_type = "STRING";
+                value_type = "VARCHAR";
             } else if (spec.value_type == typeof (bool)) {
                 value_type = "BOOLEAN";
             } else if (spec.value_type == typeof (int)) {
@@ -109,7 +123,7 @@ public class Icd.Database : GLib.Object {
             } else {
                 /* Seemed like a reasonable way to check for blob types */
                 if (spec.get_blurb () == "blob") {
-                    value_type = "STRING";
+                    value_type = "VARCHAR";
                 }
             }
 
@@ -120,7 +134,11 @@ public class Icd.Database : GLib.Object {
 
             var value = "%s %s".printf (spec.get_name (), value_type);
             if (spec.get_nick () == "primary_key") {
-                value += " NOT NULL PRIMARY KEY";
+                if (provider == "PostgreSQL") {
+                    value += " SERIAL PRIMARY KEY";
+                } else {
+                    value += " NOT NULL PRIMARY KEY";
+                }
             }
 
             if (spec.get_nick () == "unique") {
@@ -158,7 +176,7 @@ public class Icd.Database : GLib.Object {
     }
 
     public int count (string table) throws GLib.Error {
-        var builder = new SqlBuilder (SqlStatementType.SELECT);
+        var builder = new Gda.SqlBuilder (Gda.SqlStatementType.SELECT);
         builder.select_add_target (table, null);
         builder.select_add_field ("count(*)", null, null);
         var stmt = builder.get_statement ();
@@ -176,9 +194,12 @@ public class Icd.Database : GLib.Object {
      * FIXME Using a bool on blob exclude seems hacky, should build query sensibly
      */
     public T[] select<T> (string table, Value? id = null,
-                          bool exclude_blobs = true, int n = 0, int offset = 0) throws GLib.Error {
+                          bool exclude_blobs = true,
+                          int n = 0,
+                          int offset = 0)
+                          throws GLib.Error {
         var ocl = (ObjectClass) typeof (T).class_ref ();
-        var builder = new SqlBuilder (SqlStatementType.SELECT);
+        var builder = new Gda.SqlBuilder (Gda.SqlStatementType.SELECT);
         builder.select_add_target (table, null);
         if (exclude_blobs) {
             foreach (var spec in ocl.list_properties ()) {
@@ -208,22 +229,20 @@ public class Icd.Database : GLib.Object {
             var pk_id = builder.add_id (pk);
             if (id != null) {
                 var expr_id = builder.add_expr_value (null, id);
-                var cond_id = builder.add_cond (SqlOperatorType.IS, pk_id, expr_id, 0);
+                var cond_id = builder.add_cond (Gda.SqlOperatorType.EQ, pk_id, expr_id, 0);
                 builder.set_where (cond_id);
             } else {
                 var expr_start = builder.add_expr_value (null, offset);
-                var cond1_id = builder.add_cond (SqlOperatorType.GEQ, pk_id, expr_start, 0);
+                var cond1_id = builder.add_cond (Gda.SqlOperatorType.GEQ, pk_id, expr_start, 0);
                 if (n != 0) {
                     var expr_end = builder.add_expr_value (null, offset + n);
-                    var cond2_id = builder.add_cond (SqlOperatorType.LT, pk_id, expr_end, 0);
-                    var cond3_id = builder.add_cond (SqlOperatorType.AND, cond1_id, cond2_id, 0);
+                    var cond2_id = builder.add_cond (Gda.SqlOperatorType.LT, pk_id, expr_end, 0);
+                    var cond3_id = builder.add_cond (Gda.SqlOperatorType.AND, cond1_id, cond2_id, 0);
                     builder.set_where (cond3_id);
                 } else {
                     builder.set_where (cond1_id);
                 }
             }
-
-
 
             var stmt = builder.get_statement ();
             var dm = conn.statement_execute_select (stmt, null);
@@ -268,7 +287,7 @@ public class Icd.Database : GLib.Object {
     }
 
     public void insert<T> (string table, T object, out Value id) throws GLib.Error {
-        var builder = new SqlBuilder (SqlStatementType.INSERT);
+        var builder = new Gda.SqlBuilder (Gda.SqlStatementType.INSERT);
         builder.set_table (table);
         try {
             string[] columns = {};
@@ -309,7 +328,7 @@ public class Icd.Database : GLib.Object {
                     builder.add_field_value_as_gvalue (columns[i], val);
                 } else if (spec.get_blurb () == "blob") {
                     Icd.Blob blob;
-                    string val;
+                    string val = "";
                     ((Object) object).get (columns[i], out blob);
                     val = blob.to_base64 ();
                     builder.add_field_value_as_gvalue (columns[i], val);
@@ -317,17 +336,17 @@ public class Icd.Database : GLib.Object {
             }
 
             try {
-                Set last_insert_row, out_params;
+                Gda.Set last_row, @params;
                 var stmt = builder.get_statement ();
-                stmt.get_parameters (out out_params);
-                conn.statement_execute_non_select (stmt, out_params, out last_insert_row);
+                stmt.get_parameters (out @params);
+                conn.statement_execute_non_select (stmt, @params, out last_row);
             } catch (Error e) {
                 if (e.code != 4) {
                     critical ("Error: %s code: %d", e.message, e.code);
                 }
             }
 
-             /*get the id*/
+             /* Get the ID for the inserted row */
             string sql = "SELECT COUNT (*) FROM %s".printf (table);
             var dm = conn.execute_select_command (sql);
             id = dm.get_value_at (0, 0);

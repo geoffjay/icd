@@ -2,11 +2,6 @@ public class Icd.Blob : GLib.Object {
     public uint8[] data;
     public ulong length;
 
-    public static Icd.Blob.from_length (ulong length) {
-        this.length = length;
-        data = new uint8[length];
-    }
-
     public void initialize (ulong length) {
         this.length = length;
         data = new uint8[length];
@@ -17,29 +12,11 @@ public class Icd.Blob : GLib.Object {
         var decoded = Base64.decode (text);
         blob.data = decoded;
         blob.length = decoded.length;
-
         return blob;
     }
 
-    /*
-     *public static Icd.Blob from_length (ulong length) {
-     *    this.length = length;
-     *    data = new uint8[length];
-     *}
-     */
-
-    public uint8[] to_array () {
-        uint8[] ary = new uint8[length];
-        Posix.memcpy (ary, data, length);
-
-        return ary;
-    }
-
     public string to_base64 () {
-        //var ary = to_array ();
-        //var encoded = Base64.encode (ary);
-        var encoded = Base64.encode (data);
-        return encoded;
+        return Base64.encode (data);
     }
 }
 
@@ -92,7 +69,9 @@ public class Icd.Image : GLib.Object, Json.Serializable {
 
         if (property_name == "data") {
             node = new Json.Node (Json.NodeType.VALUE);
-            node.set_string (data.to_base64 ());
+            string enc = data.to_base64 ();
+            node.set_string (enc);
+            free (enc);
         } else if (property_name == "timestamp") {
             node = new Json.Node (Json.NodeType.VALUE);
             node.set_int ((int64) value.get_long ());

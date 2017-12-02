@@ -24,26 +24,22 @@ public class Icd.CameraRouter : Valum.Router {
             GLib.SList<Icd.Camera> cameras = null;
 
             cameras = model.cameras.read_all ();
-            if (cameras.length () > 0) {
-                var camera_array = new Json.Array ();
-                var generator = new Json.Generator ();
-                generator.pretty = false;
+            var camera_array = new Json.Array ();
+            var generator = new Json.Generator ();
+            generator.pretty = false;
 
-                foreach (var camera in cameras) {
-                    camera = new Camera ();
-                    camera_array.add_element (Json.gobject_serialize (camera));
-                }
-                var node = new Json.Node.alloc ();
-                node.init_array (camera_array);
-                generator.set_root (node);
-                size_t len;
-                stream.begin (generator.to_data (out len), res.body, (obj, result) => {
-                    stream.end (result);
-                });
-                return generator.to_stream (res.body);
-            } else {
-                return false;
+            foreach (var camera in cameras) {
+                camera = new Icd.Camera ();
+                camera_array.add_element (Json.gobject_serialize (camera));
             }
+            var node = new Json.Node.alloc ();
+            node.init_array (camera_array);
+            generator.set_root (node);
+            size_t len;
+            stream.begin (generator.to_data (out len), res.body, (obj, result) => {
+                stream.end (result);
+            });
+            return generator.to_stream (res.body);
         } else {
 
         return false;

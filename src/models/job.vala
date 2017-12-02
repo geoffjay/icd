@@ -2,7 +2,7 @@ public errordomain Icd.JobError {
     CAMERA
 }
 
-public class Icd.Job : GLib.Object {
+public class Icd.Job : GLib.Object, Json.Serializable {
 
     [Description(nick = "primary_key")]
     public int id { get; construct set; }
@@ -37,6 +37,7 @@ public class Icd.Job : GLib.Object {
 
     public async void run () throws Icd.JobError {
         Icd.Camera camera;
+        Icd.Image image;
 
         try {
             camera = new Icd.Camera ();
@@ -53,13 +54,7 @@ public class Icd.Job : GLib.Object {
                 var end = start + interval * 1000;
                 try {
                     /* take a picture and save the image in the database */
-                    var image = camera.capture ();
-                    /*
-                     *debug ("image length: %lu width: %d height: %d",
-                     *                                      image.data.length,
-                     *                                      image.width,
-                     *                                      image.height);
-                     */
+                    image = camera.capture ();
                     model.images.create (image);
                     var snooze = (int)((end - get_monotonic_time ()) / 1000);
                     if (snooze > 0) {
@@ -78,6 +73,8 @@ public class Icd.Job : GLib.Object {
             running = false;
             model.jobs.delete (id);
         }
+
+        image = null;
     }
 
 	public async void nap (uint interval, int priority = GLib.Priority.DEFAULT) {
@@ -88,4 +85,28 @@ public class Icd.Job : GLib.Object {
 		    }, priority);
 	    yield;
 	}
+
+    public Json.Node serialize_property (string property_name,
+                                         Value value,
+                                         ParamSpec pspec) {
+        return default_serialize_property (property_name, value, pspec);
+    }
+
+    public bool deserialize_property (string property_name,
+                                      out Value value,
+                                      ParamSpec pspec,
+                                      Json.Node property_node) {
+        value = property_node.get_value ();
+
+        return true;
+    }
+
+    public unowned ParamSpec? find_property (string name) {
+        foreach (var property in list_properties ()) {
+            if (property.get_name () == name) {
+                return property;
+            }
+        }
+        return null;
+    }
 }

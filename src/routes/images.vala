@@ -53,23 +53,24 @@ public class Icd.ImageRouter : Valum.Router {
         res.headers.set_content_type ("application/json", null);
 
         var model = Icd.Model.get_default ();
-        if (id == null) { // means get a range of images with
+        // Get a list of images with optional n and offset
+        if (id == null) {
             GLib.SList<Icd.Image> images = null;
-            var n_str = n.get_string ();
-            var offset_str = offset.get_string ();
-            if ((n_str == null) && (offset_str == null)) {
+            if ((n == null) && (offset == null)) {
                 images = model.images.read_all (true);
             } else {
-                int n_int = 0;
-                int offset_int = 0;
+                int n_val = 0;
+                int offset_val = 0;
 
-                if (offset_str != null) {
-                    offset_int = int.parse (offset_str);
+                if (offset != null) {
+                    offset_val = int.parse (offset.get_string ());
                 }
-                if (n_str != "") {
-                    n_int = int.parse (n_str);
+
+                if (n != null) {
+                    n_val = int.parse (n.get_string ());
                 }
-                images = model.images.read_num (n_int, offset_int, exclude_blobs);
+
+                images = model.images.read_num (n_val, offset_val, exclude_blobs);
             }
 
             if (images.length () > 0) {
@@ -113,9 +114,21 @@ public class Icd.ImageRouter : Valum.Router {
                     return generator.to_stream (res.body);
                 }
             } else {
+                /* FIXME Should just put this outside and always create a response,
+                   need to test why the different returns for the above cases */
+                var image_array = new Json.Array ();
+                var generator = new Json.Generator ();
+                generator.pretty = false;
+                // no nodes to create so just make an empty one
+                var node = new Json.Node.alloc ();
+                node.init_array (image_array);
+                generator.set_root (node);
+                return generator.to_stream (res.body);
                 /* FIXME Need to return a proper code in the response */
-                throw new ClientError.NOT_FOUND (
-                    "No images were found");
+                /*
+                 *throw new ClientError.NOT_FOUND (
+                 *    "No images were found");
+                 */
             }
         } else {
             var image = model.images.read (int.parse (id.get_string ()), exclude_blobs);

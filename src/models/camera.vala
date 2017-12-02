@@ -10,8 +10,10 @@ public class Icd.Camera : GLib.Object, Json.Serializable {
 
     [Description(nick = "primary_key")]
     public int id { get; construct set; }
+
     [Description(nick = "unique")]
     public string name { get; set; }
+
     public bool connected { get; set; }
 
     private string _settings;
@@ -79,16 +81,14 @@ public class Icd.Camera : GLib.Object, Json.Serializable {
         }
 
         window.get_name (out name);
-        stdout.printf ("Camera Config (incomplete)\n");
-        stdout.printf (" name:           %s\n", name);
-        stdout.printf (" child count:    %d\n", window.count_children ());
-        stdout.printf ("\n");
+        debug ("Camera Config (incomplete)");
+        debug (" name:           %s", name);
+        debug (" child count:    %d", window.count_children ());
 
         return process_widgets (window, "");
     }
 
     private void load_settings (string settings) {
-
     }
 
     private string process_widgets (CameraWidget widget, string prefix) {
@@ -112,7 +112,6 @@ public class Icd.Camera : GLib.Object, Json.Serializable {
         new_prefix = "%s/%s".printf (prefix, use_label);
 
         if ((type != CameraWidgetType.WINDOW) && (type != CameraWidgetType.SECTION)) {
-            /*stdout.printf ("%s\n", new_prefix);*/
             add_widget (widget, new_prefix);
         }
 
@@ -124,6 +123,7 @@ public class Icd.Camera : GLib.Object, Json.Serializable {
             }
             process_widgets (child, new_prefix);
         }
+
         return "blah blah blah";
     }
 
@@ -145,7 +145,7 @@ public class Icd.Camera : GLib.Object, Json.Serializable {
             gp_context.error ("Failed to retrieve values of date widget %s.", name);
         }
 
-        stdout.printf ("Label: %s %s\n", label, category);
+        debug ("Label: %s %s", label, category);
         if ((bool)readonly) {
         } else {
             switch (type) {
@@ -156,8 +156,8 @@ public class Icd.Camera : GLib.Object, Json.Serializable {
                         break;
                     }
                     text = (string) value;
-                    stdout.printf ("Type: TEXT\n");
-                    stdout.printf ("Current: %s\n", text);
+                    debug ("Type: TEXT");
+                    debug ("Current: %s", text);
                     break;
                 case CameraWidgetType.RANGE:
                     float[] ary;
@@ -169,67 +169,67 @@ public class Icd.Camera : GLib.Object, Json.Serializable {
                     }
                     ary = (float[]) value;
                     f = ary[0];
-                    stdout.printf ("Type: RANGE\n");
-                    stdout.printf ("Current: %g\n", f);
-                    stdout.printf ("Bottom: %g\n", b);
-                    stdout.printf ("Top: %g\n", t);
-                    stdout.printf ("Step: %g\n", s);
+                    debug ("Type: RANGE");
+                    debug ("Current: %g", f);
+                    debug ("Bottom: %g", b);
+                    debug ("Top: %g", t);
+                    debug ("Step: %g", s);
                     break;
                 case CameraWidgetType.TOGGLE:
                     uint8 t;
                     t = (uint8) value;
                     bool state = (t == 1);
-                    stdout.printf ("Type: TOGGLE\n");
-                    stdout.printf ("Current: %d\n", t);
+                    debug ("Type: TOGGLE");
+                    debug ("Current: %d", t);
                     break;
                 case CameraWidgetType.DATE:
                     int t = (int)value;
                     GLib.DateTime time = new GLib.DateTime.from_unix_local (t);
                     string tstring = "%s".printf (time.format ("%b %d %Y %H:%M:%S"));
 
-                    stdout.printf ("Type: DATE\n");
-                    stdout.printf ("Current: %s\n", tstring);
-                    stdout.printf ("Printable: ...\n");
-                    stdout.printf ("Help: %s\n", "Use 'now' as the current time when setting.\n");
+                    debug ("Type: DATE");
+                    debug ("Current: %s", tstring);
+                    debug ("Printable: ...");
+                    debug ("Help: %s\n", "Use 'now' as the current time when setting.");
                     break;
                 case CameraWidgetType.MENU:
                     int n = widget.count_choices ();
                     string current = (string) value;
 
-                    stdout.printf ("Type: MENU\n");
-                    stdout.printf ("Current: %s\n", current);
+                    debug ("Type: MENU");
+                    debug ("Current: %s", current);
                     for (int i = 0; i < n; i++) {
                         string choice;
                         ret = widget.get_choice (i, out choice);
                         if (ret != Result.OK) {
                             continue;
                         }
-                        stdout.printf ("Choice: %d %s\n", i, choice);
+                        debug ("Choice: %d %s", i, choice);
                     }
                     break;
                 case CameraWidgetType.RADIO:
                     int n = widget.count_choices ();
                     string current = (string) value;
 
-                    stdout.printf ("Type: RADIO\n");
-                    stdout.printf ("Current: %s\n", current);
+                    debug ("Type: RADIO");
+                    debug ("Current: %s", current);
                     for (int i = 0; i < n; i++) {
                         string choice;
                         ret = widget.get_choice (i, out choice);
                         if (ret != Result.OK) {
                             continue;
                         }
-                        stdout.printf ("Choice: %d %s\n", i, choice);
+                        debug ("Choice: %d %s", i, choice);
                     }
                     break;
                 case CameraWidgetType.WINDOW:
-                    stdout.printf ("Type: WINDOW\n");
+                    debug ("Type: WINDOW");
                     break;
                 case CameraWidgetType.SECTION:
-                    stdout.printf ("Type: SECTION\n");
+                    debug ("Type: SECTION");
                     break;
                 case CameraWidgetType.BUTTON:
-                    stdout.printf ("Type: BUTTON\n");
+                    debug ("Type: BUTTON");
                     break;
             }
         }
@@ -243,7 +243,7 @@ public class Icd.Camera : GLib.Object, Json.Serializable {
         Icd.Image image;
 
         uint8 *data;
-        ulong data_len;
+        ulong data_len = 0;
         string tmpname = "tmpfileXXXXXX";
         int fd = -1;
         long timestamp = 0;
@@ -266,21 +266,22 @@ public class Icd.Camera : GLib.Object, Json.Serializable {
 
             if (file != null) {
                 ret = camera.get_file ((string) path.folder,
-                                    (string) path.name,
-                                    CameraFileType.NORMAL,
-                                    file,
-                                    gp_context);
+                                       (string) path.name,
+                                       CameraFileType.NORMAL,
+                                       file,
+                                       gp_context);
+
                 if (ret != Result.OK) {
                     critical (ret.to_full_string ());
                     throw new Icd.CameraError.CAPTURE (
                             "Camera capture failed: %s".printf (ret.to_full_string ()));
-
                 } else {
                     CameraFileInfo info;
                     ret = camera.get_file_info ((string) path.folder,
                                                 (string) path.name,
                                                 out info,
                                                 gp_context);
+
                     if (ret != Result.OK) {
                         critical (ret.to_full_string ());
                         throw new Icd.CameraError.CAPTURE (
@@ -309,13 +310,10 @@ public class Icd.Camera : GLib.Object, Json.Serializable {
         image.timestamp = timestamp;
         image.width = width;
         image.height = height;
-        var blob = image.data;
-        //blob.length = data_len;
-        blob.initialize (data_len);
+        image.data.initialize (data_len);
 
-        //Icd.Blob blob = new Icd.Blob.from_length (data_len);
-        Posix.memcpy (blob.data, data, (size_t) data_len);
-        //image.data = blob;
+        Posix.memcpy (image.data.data, data, (size_t) data_len);
+        free (data);
 
         FileUtils.close (fd);
         FileUtils.unlink (tmpname);

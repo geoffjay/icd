@@ -73,8 +73,8 @@ public class Icd.Model : GLib.Object {
         public virtual int create (T object) {
             Value id;
             try {
+                var type = (object as Object).get_type ();
                 db.insert (name, object, out id);
-                /*debug ("id: %d", id.get_int ());*/
             } catch (GLib.Error e) {
                 critical (e.message);
             }
@@ -115,7 +115,6 @@ public class Icd.Model : GLib.Object {
         public virtual GLib.SList<T> read_num (int n, int offset, bool exclude_blobs = true) {
             var list = new GLib.SList<T> ();
             try {
-                /*debug ("read_num (%d, %d, %s)", n, offset, exclude_blobs.to_string ());*/
                 T[] records = db.select (name, null, exclude_blobs, n, offset);
                 foreach (var record in records) {
                     list.append (record);
@@ -138,7 +137,6 @@ public class Icd.Model : GLib.Object {
             try {
                 var val_id = Value (typeof (int));
                 val_id.set_int (id);
-                /*debug ("%d %d", id, val_id.get_int ());*/
                 db.delete (name, val_id);
             } catch (GLib.Error e) {
                 critical (e.message);
@@ -154,7 +152,6 @@ public class Icd.Model : GLib.Object {
         public virtual void remove (string column, string value) {
             try {
                 db.delete_where (name, column, value);
-                /*debug ("id: %d", id.get_int ());*/
             } catch (GLib.Error e) {
                 critical (e.message);
             }
@@ -177,10 +174,6 @@ public class Icd.Model : GLib.Object {
         public ImageRepository (Icd.Database db) {
             base (db);
             name = "images";
-        }
-
-        public override Icd.Image? read (int id, bool exclude_blobs) {
-            return null;
         }
     }
 
@@ -234,6 +227,11 @@ public class Icd.Model : GLib.Object {
         }
     }
 
+    /**
+     * TODO Add a list of cameras
+     * TODO Move the camera operations (eg. open) here from the Camera model
+     * TODO Override base repository CRUD methods here
+     */
     public class CameraRepository : Repository<Icd.Camera?> {
 
         private GUdev.Client client;
@@ -291,7 +289,6 @@ public class Icd.Model : GLib.Object {
             debug ("A camera at %s is connected", icd_camera.name);
         }
 
-
         private void connect_cb (string action, GUdev.Device device) {
            if (device.has_property ("ID_MODEL_FROM_DATABASE")) {
                if ((device.get_property ("ID_MODEL_FROM_DATABASE").contains ("EOS"))) {
@@ -308,7 +305,7 @@ public class Icd.Model : GLib.Object {
                             debug ("A camera at %s was disconnected", devname);
                         } else {
                             warning ("Device: %s :: Unknown action: %s",
-                                            device.get_property ("ID_MODEL_FROM_DATABASE"), action);
+                                     device.get_property ("ID_MODEL_FROM_DATABASE"), action);
                         }
                    }
                }
