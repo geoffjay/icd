@@ -63,13 +63,13 @@ dep_tmpl = dependency('template-glib-1.0')
 dep_xml = dependency('libxml-2.0')
 dep_posix = meson.get_compiler('vala').find_library('posix')
 
-dep_valum = dependency('valum-0.3', version: '>= 0.3.13', required: false)
+dep_valum = dependency('valum-0.4', version: '>= 0.4.0', required: false)
 if not dep_valum.found()
   message('Valum needs to be installed for the installation to work')
   dep_valum = subproject('valum').get_variable('valum')
 endif
 
-dep_vsgi = dependency('vsgi-0.3', version: '>= 0.3.13', required: false)
+dep_vsgi = dependency('vsgi-0.4', version: '>= 0.4.0', required: false)
 if not dep_vsgi.found()
   dep_vsgi = subproject('valum').get_variable('vsgi')
 endif

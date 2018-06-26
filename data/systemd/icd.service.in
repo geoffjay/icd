@@ -5,7 +5,7 @@ AssertPathExists=@sysconfdir@
 [Service]
 #User=pi
 #Group=pi
-ExecStart=@bindir@/icd --config @sysconfdir@/config.ini
+ExecStart=@bindir@/icd --config @sysconfdir@/icd.conf
 
 [Install]
 WantedBy=default.target

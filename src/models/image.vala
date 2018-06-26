@@ -71,7 +71,6 @@ public class Icd.Image : GLib.Object, Json.Serializable {
             node = new Json.Node (Json.NodeType.VALUE);
             string enc = data.to_base64 ();
             node.set_string (enc);
-            free (enc);
         } else if (property_name == "timestamp") {
             node = new Json.Node (Json.NodeType.VALUE);
             node.set_int ((int64) value.get_long ());

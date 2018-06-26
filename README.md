@@ -13,7 +13,7 @@ The API is generated from RAML and can be viewed [here](doc/api/API.md).
 sudo dnf install python-pip3 cmake valac flex bison gettext \
     libgphoto2-devel libgee-devel json-glib-devel libgda-devel libgda-sqlite \
     libgda-mysql libgda-postgres libsoup2.4-devel libxml2-devel openssl-devel \
-    libxml2-devel libgtop2-devel glib2-devel
+    libxml2-devel libgtop2-devel glib2-devel meson ninja-build git
 ```
 
 ### Debian/Ubuntu
@@ -22,7 +22,7 @@ sudo dnf install python-pip3 cmake valac flex bison gettext \
 sudo apt-get install python3-pip cmake valac flex bison gettext \
     libgda-5.0-dev libgee-0.8-dev libgirepository1.0-dev libglib2.0-dev \
     libgphoto2-dev libjson-glib-dev libsoup2.4-dev libssl-dev libxml2-utils \
-    libgtop2-dev
+    libgtop2-dev libgudev-1.0-dev meson ninja-build git
 ```
 
 ### Common
@@ -32,8 +32,7 @@ subprojects and during testing it isn't necessary to install them.
 
 ```bash
 sudo pip3 install scikit-build
-sudo pip3 install meson ninja
-git clone https://github.com/chergert/template-glib.git
+git clone https://gitlab.gnome.org/GNOME/template-glib
 cd template-glib
 meson --prefix=/usr _build
 ninja -C _build
@@ -62,7 +61,7 @@ sudo udevadm trigger
 ## Build/Install
 
 ```bash
-git clone git@github.com:geoffjay/icd.git icd
+git clone https://github.com/geoffjay/icd.git icd
 cd icd
 # During development
 meson _build
@@ -80,8 +79,18 @@ sudo ninja -C _build install
 Valum doesn't set the library path for the VSGI `.so` files that are needed so
 this is necessary to execute `icd` once installed.
 
+#### Fedora / Ubuntu
+
 ```bash
-echo /usr/lib64/vsgi-0.3/servers | \
+echo /usr/lib64/vsgi-0.4/servers | \
+  sudo tee /etc/ld.so.conf.d/valum-x86_64.conf >/dev/null
+sudo ldconfig
+```
+
+#### Raspberry Pi
+
+```bash
+echo /usr/lib/arm-linux-gnueabihf/vsgi-0.4/servers | \
   sudo tee /etc/ld.so.conf.d/valum-x86_64.conf >/dev/null
 sudo ldconfig
 ```
