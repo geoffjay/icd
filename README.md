@@ -9,7 +9,7 @@ The API is generated from RAML and can be viewed [here](doc/api/API.md).
 
 ### Fedora
 
-```bash
+```sh
 sudo dnf install python-pip3 cmake valac flex bison gettext \
     libgphoto2-devel libgee-devel json-glib-devel libgda-devel libgda-sqlite \
     libgda-mysql libgda-postgres libsoup2.4-devel libxml2-devel openssl-devel \
@@ -18,7 +18,7 @@ sudo dnf install python-pip3 cmake valac flex bison gettext \
 
 ### Debian/Ubuntu
 
-```bash
+```sh
 sudo apt-get install python3-pip cmake valac flex bison gettext \
     libgda-5.0-dev libgee-0.8-dev libgirepository1.0-dev libglib2.0-dev \
     libgphoto2-dev libjson-glib-dev libsoup2.4-dev libssl-dev libxml2-utils \
@@ -30,7 +30,7 @@ sudo apt-get install python3-pip cmake valac flex bison gettext \
 A couple of the build dependencies are added to this repository as `meson`
 subprojects and during testing it isn't necessary to install them.
 
-```bash
+```sh
 sudo pip3 install scikit-build
 git clone https://gitlab.gnome.org/GNOME/template-glib
 cd template-glib
@@ -51,7 +51,7 @@ USB cameras need to have the permissions changed, possibly just if the settings
 will be changed. The example `udev` rule below is for a Canon camera that was
 used during development.
 
-```bash
+```sh
 echo 'SUBSYSTEM=="usb", ATTR{idVendor}=="04a9", ATTR{idProduct}=="3218", MODE="0666"' | \
     sudo tee /etc/udev/rules.d/50-canon.rules >/dev/null
 sudo udevadm control --reload
@@ -60,7 +60,7 @@ sudo udevadm trigger
 
 ## Build/Install
 
-```bash
+```sh
 git clone https://github.com/geoffjay/icd.git icd
 cd icd
 # During development
@@ -81,7 +81,7 @@ this is necessary to execute `icd` once installed.
 
 #### Fedora / Ubuntu
 
-```bash
+```sh
 echo /usr/lib64/vsgi-0.4/servers | \
   sudo tee /etc/ld.so.conf.d/valum-x86_64.conf >/dev/null
 sudo ldconfig
@@ -89,24 +89,42 @@ sudo ldconfig
 
 #### Raspberry Pi
 
-```bash
+```sh
 echo /usr/lib/arm-linux-gnueabihf/vsgi-0.4/servers | \
   sudo tee /etc/ld.so.conf.d/valum-x86_64.conf >/dev/null
 sudo ldconfig
+```
+
+## Ansible
+
+This method is what's currently used to deploy on a RaspberryPi, it hasn't been tested anywhere else.
+
+```sh
+sudo apt-get install python3-pip git
+python3 -m pip install --user ansible cryptography
+echo -e '\nPATH=$HOME/.local/bin:$PATH' >> ~/.bashrc
+. ~/.bashrc
+sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 20
+sudo update-alternatives --install /usr/bin/python python /usr/bin/python2 10
+sudo update-alternatives --config python
+# pick python3
+git clone <not sure yet> playbook # FIXME
+cd playbook
+ansible-playbook icd.yml
 ```
 
 ## Docker
 
 Build and run the application using `Docker`.
 
-```bash
+```sh
 docker build -t icd .
 docker run --rm -it --privileged -v /dev/bus/usb:/dev/bus/usb -p 3003:3003 icd
 ```
 
 Or with Docker Compose.
 
-```bash
+```sh
 docker-compose up
 ```
 
@@ -135,7 +153,7 @@ different volume that is mapped in a similar way as is done with the USB bus.
 
 #### SQLite Sample
 
-```bash
+```sh
 [general]
 address = 127.0.0.1
 port = 3003
@@ -145,3 +163,4 @@ reset = false
 name = icd
 provider = SQLite
 path = /usr/share/icd/
+```
