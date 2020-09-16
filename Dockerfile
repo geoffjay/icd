@@ -23,12 +23,8 @@ RUN apt-get install -y \
     valac
 RUN rm -rf /var/lib/apt/lists/*
 
-# Meson
-RUN pip3 install meson
-
-# Ninja
-ADD https://github.com/ninja-build/ninja/releases/download/v1.6.0/ninja-linux.zip /tmp
-RUN unzip /tmp/ninja-linux.zip -d /usr/local/bin
+# Meson and Ninja
+RUN pip3 install meson ninja
 
 # Template-GLib
 ADD https://github.com/chergert/template-glib/archive/3.25.92.tar.gz /tmp
