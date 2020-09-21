@@ -1,5 +1,11 @@
 # Image Capture Service
 
+[WIP]: this project is in an unfinished state, some of the goals of the project
+were not implemented. The API generated was what was being worked towards but
+time didn't allow for all to be completed and was used when it was _good enough_.
+The [router](https://github.com/geoffjay/icd/blob/master/src/router.vala) file
+has what routes were actually implemented.
+
 Use libgphoto2 to capture images using compatible cameras and expose certain
 functionality over a REST API as a service.
 
