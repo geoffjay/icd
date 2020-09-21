@@ -30,22 +30,6 @@ RUN pip3 install meson
 ADD https://github.com/ninja-build/ninja/releases/download/v1.6.0/ninja-linux.zip /tmp
 RUN unzip /tmp/ninja-linux.zip -d /usr/local/bin
 
-# Template-GLib
-ADD https://github.com/chergert/template-glib/archive/3.25.92.tar.gz /tmp
-RUN tar zxf /tmp/3.25.92.tar.gz -C /tmp
-WORKDIR /tmp/template-glib-3.25.92
-RUN meson setup --prefix=/usr _build
-RUN meson compile -C _build && meson install -C _build
-
-# Valum
-ADD https://github.com/valum-framework/valum/archive/v0.3.13.tar.gz /tmp
-RUN tar zxf /tmp/v0.3.13.tar.gz -C /tmp
-WORKDIR /tmp/valum-0.3.13
-RUN meson setup --prefix=/usr --buildtype=release _build
-RUN meson compile -C _build && meson install -C _build
-RUN echo /usr/lib/x86_64-linux-gnu/vsgi-0.3/servers | tee /etc/ld.so.conf.d/valum-x86_64.conf >/dev/null
-RUN ldconfig
-
 WORKDIR /icd
 ADD . .
 RUN meson setup --prefix=/usr --sysconfdir=/etc --buildtype=release _build
