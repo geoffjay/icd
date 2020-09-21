@@ -1,16 +1,15 @@
 # TODO
 
-* Add read\_num method to Repository as
-  > `public virtual GLib.SList<T> read\_num (int n, int offset, bool exclude\_blobs = true)`
-* Validate job remaining/counter for progress
-* Fix crashing on no camera connected (happens in Job currently?)
-* Make the job continue on restart if not finished
-* Review the RAML spec to make sure we're not deviating too far
-* Create a job Queue (?)
-* Add GUdev to (model?) to register camera connection changes (see udev.vala)
-  to the model as CameraRepository
-* Create database entry in table on camera connect
-* Delete database entry in table on camera disconnect
+* [ ] Add read\_num method to Repository as
+  > `public virtual GLib.SList<T> read_num (int n, int offset, bool exclude_blobs = true)`
+* [ ] Validate job remaining/counter for progress
+* [ ] Fix crashing on no camera connected (happens in Job currently?)
+* [ ] Make the job continue on restart if not finished
+* [ ] Review the RAML spec to make sure we're not deviating too far
+* [ ] Create a job Queue (?)
+* [ ] Add GUdev to (model?) to register camera connection changes (see udev.vala to the model as CameraRepository
+* [ ] Create database entry in table on camera connect
+* [ ] Delete database entry in table on camera disconnect
 
 ## GUdev notes for CameraRepository
 
