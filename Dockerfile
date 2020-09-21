@@ -26,27 +26,11 @@ RUN rm -rf /var/lib/apt/lists/*
 # Meson and Ninja
 RUN pip3 install meson ninja
 
-# Template-GLib
-ADD https://github.com/chergert/template-glib/archive/3.25.92.tar.gz /tmp
-RUN tar zxf /tmp/3.25.92.tar.gz -C /tmp
-WORKDIR /tmp/template-glib-3.25.92
-RUN meson --prefix=/usr _build
-RUN ninja -C _build && ninja -C _build install
-
-# Valum
-ADD https://github.com/valum-framework/valum/archive/v0.3.13.tar.gz /tmp
-RUN tar zxf /tmp/v0.3.13.tar.gz -C /tmp
-WORKDIR /tmp/valum-0.3.13
-RUN meson --prefix=/usr --buildtype=release _build
-RUN ninja -C _build && ninja -C _build install
-RUN echo /usr/lib/x86_64-linux-gnu/vsgi-0.3/servers | tee /etc/ld.so.conf.d/valum-x86_64.conf >/dev/null
-RUN ldconfig
-
 WORKDIR /icd
 ADD . .
-RUN meson --prefix=/usr --sysconfdir=/etc --buildtype=release _build
+RUN meson setup --prefix=/usr --sysconfdir=/etc --buildtype=release _build
 RUN meson configure -Denable-tests=false _build
-RUN ninja -C _build && ninja -C _build install
+RUN meson compile -C _build && meson install -C _build
 
 CMD ["/usr/bin/icd", "--config", "/etc/icd/icd.conf"]
 
